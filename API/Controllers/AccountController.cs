@@ -52,10 +52,13 @@ public class AccountController : BaseApiController
 
     public async Task<ActionResult<UserDto>> Login(LoginDto login)
     {
-        var user = await context.Users.FirstOrDefaultAsync(x => x.UserName == login.Username.ToLower());
-        if (user == null) return Unauthorized("Invalid username");
+        var user = await context.Users.Where(x => x.UserName.ToLower() == login.Username.ToLower()).FirstOrDefaultAsync();
+        if (user == null) 
+        {
+            return Unauthorized("Invalid username");
+        }
 
-        using var hmac = new HMACSHA512(user.Password);
+        using HMACSHA512? hmac = new HMACSHA512(user.PasswordHash);
         var computeHash = hmac.ComputeHash(Encoding.UTF8.GetBytes(login.Password));
         for (int i = 0; i < computeHash.Length; i++)
         {
